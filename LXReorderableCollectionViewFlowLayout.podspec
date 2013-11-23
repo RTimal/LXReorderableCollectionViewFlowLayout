@@ -1,15 +1,15 @@
 Pod::Spec.new do |s|
-  s.name = 'LXReorderableCollectionViewFlowLayout'
+  s.name = 'RTReorderableCollectionViewFlowLayout'
   s.version = '0.1.1'
-  s.summary = 'Extends UICollectionViewFlowLayout to support reordering of cells. Similar to long press and pan on books in iBook.'
-  s.homepage = 'https://github.com/lxcid/LXReorderableCollectionViewFlowLayout'
+  s.summary = 'Extends UICollectionViewFlowLayout to support reordering of cells. Similar to long press and pan on books in iBooks.'
+  s.homepage = 'https://github.com/RTimal/RTReorderableCollectionViewFlowLayout'
   s.license = {
     :type => 'MIT',
     :file => 'LICENSE'
   }
-  s.author = 'Stan Chang Khin Boon'
+  s.author = 'Rajiev Timal'
   s.source = {
-    :git => 'https://github.com/lxcid/LXReorderableCollectionViewFlowLayout.git',
+    :git => 'https://github.com/RTimal/RTReorderableCollectionViewFlowLayout',
     :tag => '0.1.1'
   }
   s.platform = :ios, '4.3'

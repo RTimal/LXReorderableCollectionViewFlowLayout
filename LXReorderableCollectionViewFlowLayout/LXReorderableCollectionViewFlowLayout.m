@@ -38,7 +38,6 @@ static NSInteger kLXFramesPerSecond = 60.f;
 @property (nonatomic, copy) NSDictionary *LX_userInfo;
 @end
 
-
 @implementation CADisplayLink (LX_userInfo)
 
 - (void)setLX_userInfo:(NSDictionary *) LX_userInfo {
@@ -76,7 +75,7 @@ static NSInteger kLXFramesPerSecond = 60.f;
 @interface LXReorderableCollectionViewFlowLayout ()
 
 @property (strong, nonatomic) NSIndexPath *indexPathForSelectedItem;
-@property (strong, nonatomic) UIView *currentView;
+@property (strong, nonatomic) UIView *currentCellCopy;
 @property (assign, nonatomic) CGPoint currentViewCenter;
 @property (assign, nonatomic) CGPoint panTranslationInCollectionView;
 @property (strong, nonatomic) CADisplayLink *displayLink;
@@ -145,6 +144,7 @@ static NSInteger kLXFramesPerSecond = 60.f;
     _panGestureRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self
                                                                     action:@selector(handlePanGesture:)];
     _panGestureRecognizer.delegate = self;
+	
     [self.collectionView addGestureRecognizer:_panGestureRecognizer];
 
     // Useful in multiple scenarios: one common scenario being when the Notification Center drawer is pulled down
@@ -162,50 +162,7 @@ static NSInteger kLXFramesPerSecond = 60.f;
 {
     return (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
 }
-
-#pragma mark Invalidate Layout
-
-- (void)invalidateLayoutIfNecessary
-{
-    NSIndexPath *newIndexPath = [self.collectionView indexPathForItemAtPoint:_currentView.center];
-    NSIndexPath *previousIndexPath = _indexPathForSelectedItem;
-
-    if ((newIndexPath == nil) || [newIndexPath isEqual:previousIndexPath])
-	{
-        return;
-    }
-
-    if ([[self dataSource] respondsToSelector:@selector(collectionView:itemAtIndexPath:canMoveToIndexPath:)] &&
-        ![[self dataSource] collectionView:self.collectionView itemAtIndexPath:previousIndexPath canMoveToIndexPath:newIndexPath])
-	{
-        return;
-    }
-	
-	_indexPathForSelectedItem = newIndexPath;
-    
-    if ([[self dataSource] respondsToSelector:@selector(collectionView:itemAtIndexPath:willMoveToIndexPath:)])
-	{
-        [[self dataSource] collectionView:self.collectionView itemAtIndexPath:previousIndexPath willMoveToIndexPath:newIndexPath];
-    }
-	
-    __weak typeof(self) weakSelf = self;
-    [self.collectionView performBatchUpdates:^{
-        __strong typeof(self) strongSelf = weakSelf;
-        if (strongSelf) {
-            [strongSelf.collectionView deleteItemsAtIndexPaths:@[ previousIndexPath ]];
-            [strongSelf.collectionView insertItemsAtIndexPaths:@[ newIndexPath ]];
-        }
-    } completion:^(BOOL finished) {
-        __strong typeof(self) strongSelf = weakSelf;
-        if ([strongSelf.dataSource respondsToSelector:@selector(collectionView:itemAtIndexPath:didMoveToIndexPath:)]) {
-            [strongSelf.dataSource collectionView:strongSelf.collectionView itemAtIndexPath:previousIndexPath didMoveToIndexPath:newIndexPath];
-        }
-    }];
-	
-}
-
-
-#pragma mark Scrolling
+#pragma mark - Long Press
 
 - (void)handleLongPressGesture:(UILongPressGestureRecognizer *)gestureRecognizer
 {
@@ -215,32 +172,37 @@ static NSInteger kLXFramesPerSecond = 60.f;
 		{
             NSIndexPath *currentIndexPath = [self.collectionView indexPathForItemAtPoint:[gestureRecognizer locationInView:self.collectionView]];
 
-            if ([self.dataSource respondsToSelector:@selector(collectionView:canMoveItemAtIndexPath:)] &&
-               ![self.dataSource collectionView:self.collectionView canMoveItemAtIndexPath:currentIndexPath])
+            if (![self.dataSource collectionView:self.collectionView canMoveItemAtIndexPath:currentIndexPath])
 			{
                 return;
             }
+			
+			_indexPathForSelectedItem = currentIndexPath;
 
-            self.indexPathForSelectedItem = currentIndexPath;
-            
-            if ([self.delegate respondsToSelector:@selector(collectionView:layout:willBeginDraggingItemAtIndexPath:)])
+            if ([[self delegate] respondsToSelector:@selector(collectionView:layout:willBeginDraggingItemAtIndexPath:)])
 			{
-                [self.delegate collectionView:self.collectionView layout:self willBeginDraggingItemAtIndexPath:self.indexPathForSelectedItem];
+				[[self delegate]collectionView:self.collectionView layout:self willBeginDraggingItemAtIndexPath:_indexPathForSelectedItem];
             }
-            UICollectionViewCell *collectionViewCell = [self.collectionView cellForItemAtIndexPath:self.indexPathForSelectedItem];
-            self.currentView = [[UIView alloc] initWithFrame:collectionViewCell.frame];
-            collectionViewCell.highlighted = YES;
+			
+            UICollectionViewCell *collectionViewCell = [self.collectionView cellForItemAtIndexPath:_indexPathForSelectedItem];
+
+            self.currentCellCopy = [[UIView alloc] initWithFrame:collectionViewCell.frame];
+			
+			collectionViewCell.highlighted = YES;
             UIImageView *highlightedImageView = [[UIImageView alloc] initWithImage:[collectionViewCell LX_rasterizedImage]];
             highlightedImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
             highlightedImageView.alpha = 1.0f;
+			
             collectionViewCell.highlighted = NO;
             UIImageView *imageView = [[UIImageView alloc] initWithImage:[collectionViewCell LX_rasterizedImage]];
             imageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
             imageView.alpha = 0.0f;
-            [self.currentView addSubview:imageView];
-            [self.currentView addSubview:highlightedImageView];
-            [self.collectionView addSubview:self.currentView];
-            self.currentViewCenter = self.currentView.center;
+			
+            [self.currentCellCopy addSubview:imageView];
+            [self.currentCellCopy addSubview:highlightedImageView];
+            [self.collectionView addSubview:self.currentCellCopy];
+            self.currentViewCenter = self.currentCellCopy.center;
+			
             __weak typeof(self) weakSelf = self;
 			
             [UIView
@@ -250,7 +212,7 @@ static NSInteger kLXFramesPerSecond = 60.f;
              animations:^{
                  __strong typeof(self) strongSelf = weakSelf;
                  if (strongSelf) {
-                     strongSelf.currentView.transform = CGAffineTransformMakeScale(1.1f, 1.1f);
+                     strongSelf.currentCellCopy.transform = CGAffineTransformMakeScale(1.1f, 1.1f);
                      highlightedImageView.alpha = 0.0f;
                      imageView.alpha = 1.0f;
                  }
@@ -261,7 +223,7 @@ static NSInteger kLXFramesPerSecond = 60.f;
                      [highlightedImageView removeFromSuperview];
                      
                      if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:didBeginDraggingItemAtIndexPath:)]) {
-                         [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf didBeginDraggingItemAtIndexPath:strongSelf.indexPathForSelectedItem];
+						 [strongSelf.delegate collectionView:strongSelf.collectionView layout:strongSelf didBeginDraggingItemAtIndexPath:strongSelf.indexPathForSelectedItem];
                      }
                  }
              }];
@@ -288,15 +250,15 @@ static NSInteger kLXFramesPerSecond = 60.f;
                  animations:^{
                      __strong typeof(self) strongSelf = weakSelf;
                      if (strongSelf) {
-                         strongSelf.currentView.transform = CGAffineTransformMakeScale(1.0f, 1.0f);
-                         strongSelf.currentView.center = layoutAttributes.center;
+                         strongSelf.currentCellCopy.transform = CGAffineTransformMakeScale(1.0f, 1.0f);
+                         strongSelf.currentCellCopy.center = layoutAttributes.center;
                      }
                  }
                  completion:^(BOOL finished) {
                      __strong typeof(self) strongSelf = weakSelf;
                      if (strongSelf) {
-                         [strongSelf.currentView removeFromSuperview];
-                         strongSelf.currentView = nil;
+                         [strongSelf.currentCellCopy removeFromSuperview];
+                         strongSelf.currentCellCopy = nil;
                          [strongSelf invalidateLayout];
                          
                          if ([strongSelf.delegate respondsToSelector:@selector(collectionView:layout:didEndDraggingItemAtIndexPath:)]) {
@@ -319,13 +281,15 @@ static NSInteger kLXFramesPerSecond = 60.f;
         case UIGestureRecognizerStateBegan:
         case UIGestureRecognizerStateChanged:
 		{
-            self.panTranslationInCollectionView = [gestureRecognizer translationInView:self.collectionView];
-            CGPoint viewCenter = self.currentView.center = LXS_CGPointAdd(self.currentViewCenter, self.panTranslationInCollectionView);
-            
+            _panTranslationInCollectionView = [gestureRecognizer translationInView:self.collectionView];
+            CGPoint viewCenter = _currentCellCopy.center = LXS_CGPointAdd(_currentViewCenter, self.panTranslationInCollectionView);
+
             [self invalidateLayoutIfNecessary];
             
-            switch (self.scrollDirection) {
-                case UICollectionViewScrollDirectionVertical: {
+            switch (self.scrollDirection)
+			{
+                case UICollectionViewScrollDirectionVertical:
+				{
                     if (viewCenter.y < (CGRectGetMinY(self.collectionView.bounds) + self.scrollingTriggerEdgeInsets.top)) {
                         [self setupScrollTimerInDirection:LXScrollingDirectionUp];
                     } else {
@@ -357,6 +321,46 @@ static NSInteger kLXFramesPerSecond = 60.f;
             // Do nothing...
         } break;
     }
+}
+
+
+- (void)invalidateLayoutIfNecessary
+{
+    NSIndexPath *newIndexPath = [self.collectionView indexPathForItemAtPoint:_currentCellCopy.center];
+    NSIndexPath *previousIndexPath = _indexPathForSelectedItem;
+	
+    if ((newIndexPath == nil) || [newIndexPath isEqual:previousIndexPath])
+	{
+        return;
+    }
+	
+    if ([[self dataSource] respondsToSelector:@selector(collectionView:itemAtIndexPath:canMoveToIndexPath:)] &&
+        ![[self dataSource] collectionView:self.collectionView itemAtIndexPath:previousIndexPath canMoveToIndexPath:newIndexPath])
+	{
+        return;
+    }
+	
+	_indexPathForSelectedItem = newIndexPath;
+    
+    if ([[self dataSource] respondsToSelector:@selector(collectionView:itemAtIndexPath:willMoveToIndexPath:)])
+	{
+        [[self dataSource] collectionView:self.collectionView itemAtIndexPath:previousIndexPath willMoveToIndexPath:newIndexPath];
+    }
+	
+    __weak typeof(self) weakSelf = self;
+    [self.collectionView performBatchUpdates:^{
+        __strong typeof(self) strongSelf = weakSelf;
+        if (strongSelf) {
+            [strongSelf.collectionView deleteItemsAtIndexPaths:@[ previousIndexPath ]];
+            [strongSelf.collectionView insertItemsAtIndexPaths:@[ newIndexPath ]];
+        }
+    } completion:^(BOOL finished) {
+        __strong typeof(self) strongSelf = weakSelf;
+        if ([strongSelf.dataSource respondsToSelector:@selector(collectionView:itemAtIndexPath:didMoveToIndexPath:)]) {
+            [strongSelf.dataSource collectionView:strongSelf.collectionView itemAtIndexPath:previousIndexPath didMoveToIndexPath:newIndexPath];
+        }
+    }];
+	
 }
 
 - (void)setupScrollTimerInDirection:(LXScrollingDirection)direction
@@ -453,10 +457,9 @@ static NSInteger kLXFramesPerSecond = 60.f;
     }
     
     self.currentViewCenter = LXS_CGPointAdd(self.currentViewCenter, translation);
-    self.currentView.center = LXS_CGPointAdd(self.currentViewCenter, self.panTranslationInCollectionView);
+    self.currentCellCopy.center = LXS_CGPointAdd(self.currentViewCenter, self.panTranslationInCollectionView);
     self.collectionView.contentOffset = LXS_CGPointAdd(contentOffset, translation);
 }
-
 
 #pragma mark - UICollectionViewLayout overridden methods
 
@@ -467,7 +470,7 @@ static NSInteger kLXFramesPerSecond = 60.f;
 	{
         switch (layoutAttributes.representedElementCategory) {
             case UICollectionElementCategoryCell: {
-                [self applyLayoutAttributes:layoutAttributes];
+                [self changeLayoutAttributes:layoutAttributes];
             } break;
             default: {
                 // Do nothing...
@@ -481,9 +484,10 @@ static NSInteger kLXFramesPerSecond = 60.f;
 - (UICollectionViewLayoutAttributes *)layoutAttributesForItemAtIndexPath:(NSIndexPath *)indexPath
 {
     UICollectionViewLayoutAttributes *layoutAttributes = [super layoutAttributesForItemAtIndexPath:indexPath];
-    switch (layoutAttributes.representedElementCategory) {
+    switch (layoutAttributes.representedElementCategory)
+	{
         case UICollectionElementCategoryCell: {
-            [self applyLayoutAttributes:layoutAttributes];
+            [self changeLayoutAttributes:layoutAttributes];
         } break;
         default: {
         } break;
@@ -492,7 +496,7 @@ static NSInteger kLXFramesPerSecond = 60.f;
     return layoutAttributes;
 }
 
-- (void)applyLayoutAttributes:(UICollectionViewLayoutAttributes *)layoutAttributes
+- (void)changeLayoutAttributes:(UICollectionViewLayoutAttributes *)layoutAttributes
 {
     if ([layoutAttributes.indexPath isEqual:self.indexPathForSelectedItem])
 	{
