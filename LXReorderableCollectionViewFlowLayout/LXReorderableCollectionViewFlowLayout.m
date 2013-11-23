@@ -167,27 +167,27 @@ static NSInteger kLXFramesPerSecond = 60.f;
 
 - (void)invalidateLayoutIfNecessary
 {
-    NSIndexPath *newIndexPath = [self.collectionView indexPathForItemAtPoint:self.currentView.center];
-    NSIndexPath *previousIndexPath = self.indexPathForSelectedItem;
+    NSIndexPath *newIndexPath = [self.collectionView indexPathForItemAtPoint:_currentView.center];
+    NSIndexPath *previousIndexPath = _indexPathForSelectedItem;
 
     if ((newIndexPath == nil) || [newIndexPath isEqual:previousIndexPath])
 	{
         return;
     }
-    
-    if ([self.dataSource respondsToSelector:@selector(collectionView:itemAtIndexPath:canMoveToIndexPath:)] &&
-        ![self.dataSource collectionView:self.collectionView itemAtIndexPath:previousIndexPath canMoveToIndexPath:newIndexPath])
+
+    if ([[self dataSource] respondsToSelector:@selector(collectionView:itemAtIndexPath:canMoveToIndexPath:)] &&
+        ![[self dataSource] collectionView:self.collectionView itemAtIndexPath:previousIndexPath canMoveToIndexPath:newIndexPath])
 	{
         return;
     }
+	
+	_indexPathForSelectedItem = newIndexPath;
     
-    self.indexPathForSelectedItem = newIndexPath;
-    
-    if ([self.dataSource respondsToSelector:@selector(collectionView:itemAtIndexPath:willMoveToIndexPath:)])
+    if ([[self dataSource] respondsToSelector:@selector(collectionView:itemAtIndexPath:willMoveToIndexPath:)])
 	{
-        [self.dataSource collectionView:self.collectionView itemAtIndexPath:previousIndexPath willMoveToIndexPath:newIndexPath];
+        [[self dataSource] collectionView:self.collectionView itemAtIndexPath:previousIndexPath willMoveToIndexPath:newIndexPath];
     }
-
+	
     __weak typeof(self) weakSelf = self;
     [self.collectionView performBatchUpdates:^{
         __strong typeof(self) strongSelf = weakSelf;
@@ -201,12 +201,11 @@ static NSInteger kLXFramesPerSecond = 60.f;
             [strongSelf.dataSource collectionView:strongSelf.collectionView itemAtIndexPath:previousIndexPath didMoveToIndexPath:newIndexPath];
         }
     }];
+	
 }
 
 
 #pragma mark Scrolling
-
-
 
 - (void)handleLongPressGesture:(UILongPressGestureRecognizer *)gestureRecognizer
 {
@@ -528,8 +527,8 @@ static NSInteger kLXFramesPerSecond = 60.f;
 #pragma mark - Notifications
 
 - (void)handleApplicationWillResignActive:(NSNotification *)notification {
-    self.panGestureRecognizer.enabled = NO;
-    self.panGestureRecognizer.enabled = YES;
+	[_panGestureRecognizer setEnabled:NO];
+	[_panGestureRecognizer setEnabled:YES];
 }
 
 #pragma mark Dealloc

@@ -14,6 +14,7 @@
 @property (strong, nonatomic, readonly) UILongPressGestureRecognizer *longPressGestureRecognizer;
 @property (strong, nonatomic, readonly) UIPanGestureRecognizer *panGestureRecognizer;
 
+
 @end
 
 @protocol LXReorderableCollectionViewDataSource <UICollectionViewDataSource>
