@@ -60,7 +60,8 @@ static NSInteger kLXFramesPerSecond = 60.f;
 
 @implementation UICollectionViewCell (LXReorderableCollectionViewFlowLayout)
 
-- (UIImage *)LX_rasterizedImage {
+- (UIImage *)LX_rasterizedImage
+{
     UIGraphicsBeginImageContextWithOptions(self.bounds.size, self.isOpaque, 0.0f);
     [self.layer renderInContext:UIGraphicsGetCurrentContext()];
     UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
@@ -87,10 +88,45 @@ static NSInteger kLXFramesPerSecond = 60.f;
 
 @implementation LXReorderableCollectionViewFlowLayout
 
-- (void)setDefaults
+#pragma mark Designated Initializer
+
+- (id)init
 {
-    _scrollingSpeed = 300.0f;
+    self = [super init];
+    if (self) {
+		[self setup];
+    }
+    return self;
+}
+
+- (id)initWithCoder:(NSCoder *)aDecoder
+{
+    self = [super initWithCoder:aDecoder];
+    if (self) {
+		[self setup];
+       }
+    return self;
+}
+
+#pragma mark setup
+
+- (void)setup
+{
+	_scrollingSpeed = 300.0f;
     _scrollingTriggerEdgeInsets = UIEdgeInsetsMake(50.0f, 50.0f, 50.0f, 50.0f);
+	[self addObserver:self forKeyPath:kLXCollectionViewKeyPath options:NSKeyValueObservingOptionNew context:nil];
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+{
+	if ([keyPath isEqualToString:kLXCollectionViewKeyPath])
+	{
+        if (self.collectionView != nil) {
+            [self setupCollectionView];
+        } else {
+            [self invalidatesScrollTimer];
+        }
+    }
 }
 
 - (void)setupCollectionView
@@ -115,25 +151,7 @@ static NSInteger kLXFramesPerSecond = 60.f;
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleApplicationWillResignActive:) name: UIApplicationWillResignActiveNotification object:nil];
 }
 
-- (id)init
-{
-    self = [super init];
-    if (self) {
-        [self setDefaults];
-        [self addObserver:self forKeyPath:kLXCollectionViewKeyPath options:NSKeyValueObservingOptionNew context:nil];
-    }
-    return self;
-}
-
-- (id)initWithCoder:(NSCoder *)aDecoder
-{
-    self = [super initWithCoder:aDecoder];
-    if (self) {
-        [self setDefaults];
-        [self addObserver:self forKeyPath:kLXCollectionViewKeyPath options:NSKeyValueObservingOptionNew context:nil];
-    }
-    return self;
-}
+#pragma mark - Get Data Source and Delegate
 
 - (id<LXReorderableCollectionViewDataSource>)dataSource
 {
@@ -144,6 +162,8 @@ static NSInteger kLXFramesPerSecond = 60.f;
 {
     return (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
 }
+
+#pragma mark Invalidate Layout
 
 - (void)invalidateLayoutIfNecessary
 {
@@ -503,20 +523,6 @@ static NSInteger kLXFramesPerSecond = 60.f;
     }
 
     return NO;
-}
-
-#pragma mark - Key-Value Observing methods
-
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
-{
-	if ([keyPath isEqualToString:kLXCollectionViewKeyPath])
-	{
-        if (self.collectionView != nil) {
-            [self setupCollectionView];
-        } else {
-            [self invalidatesScrollTimer];
-        }
-    }
 }
 
 #pragma mark - Notifications
