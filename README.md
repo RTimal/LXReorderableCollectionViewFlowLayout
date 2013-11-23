@@ -1,14 +1,15 @@
-LXReorderableCollectionViewFlowLayout
+RTReorderableCollectionViewFlowLayout
 =====================================
+Forked from lxcid/LXReorderableCollectionViewFlowLayout
 
 Extends `UICollectionViewFlowLayout` to support reordering of cells. Similar to long press and pan on books in iBook.
 
 Features
 ========
 
-The goal of LXReorderableCollectionViewFlowLayout is to provides capability for reordering of cell, similar to iBook.
+The goal of RTReorderableCollectionViewFlowLayout is to allow reordering of collection view cells
 
- - Long press on cell to invoke reordering capability.
+ - Long press on cell begins reordering.
  - When reordering capability is invoked, fade the selected cell from highlighted to normal state.
  - Drag around the selected cell to move it to the desired location, the other cells adjust accordingly. Callback in the form of delegate methods are invoked.
  - Drag selected cell to the edges, depending on scroll direction, scroll in the desired direction.
@@ -19,10 +20,10 @@ Getting Started
 
 <img src="https://raw.github.com/lxcid/LXReorderableCollectionViewFlowLayout/master/Content/Screenshots/screenshot1.png" alt="Screenshot" title="Screenshot" style="display:block; margin: 10px auto 30px auto; width: 300px; height: 400px;" class="center">
 
- 1. Install using *CocoaPods* or drag the `LXReorderableCollectionViewFlowLayout` folder into your project.
- 2. Initialize/Setup your collection view to use `LXReorderableCollectionViewFlowLayout`.
+ 1. Install using *CocoaPods* or drag the `RTReorderableCollectionViewFlowLayout` folder into your project.
+ 2. Initialize/Setup your collection view to use `RTReorderableCollectionViewFlowLayout`.
 
- 3. The collection view controller that is to support reordering capability must conforms to `LXReorderableCollectionViewDatasource` protocol. For example,
+ 3. The collection view controller that is to support reordering capability must conforms to `RTReorderableCollectionViewDatasource` protocol. For example,
 
         - (void)collectionView:(UICollectionView *)collectionView itemAtIndexPath:(NSIndexPath *)fromIndexPath willMoveToIndexPath:(NSIndexPath *)toIndexPath {
             id object = [mutableArray objectAtIndex:fromIndexPath.item];
@@ -30,7 +31,7 @@ Getting Started
             [mutableArray insertObject:object atIndex:toIndexPath.item];
         }
 
- 4. You can listen to some dragging events through comforming to `LXReorderableCollectionViewDelegateFlowLayout` methods.
+ 4. You can listen to some dragging events through comforming to `RTReorderableCollectionViewDelegateFlowLayout` methods.
  5. Setup your collection view accordingly to your need, run and see it in action! :D
 
 Changes
@@ -70,4 +71,4 @@ Alternatives
 License
 =======
 
-LXReorderableCollectionViewFlowLayout is available under [the MIT license](LICENSE).
+RTReorderableCollectionViewFlowLayout is available under [the MIT license](LICENSE).
