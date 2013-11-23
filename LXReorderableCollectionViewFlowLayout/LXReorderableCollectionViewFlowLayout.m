@@ -9,14 +9,14 @@
 #import <QuartzCore/QuartzCore.h>
 #import <objc/runtime.h>
 
-#define LX_FRAMES_PER_SECOND 60.0
+#pragma mark Inline Function
 
-#ifndef CGGEOMETRY_LXSUPPORT_H_
 CG_INLINE CGPoint
 LXS_CGPointAdd(CGPoint point1, CGPoint point2) {
     return CGPointMake(point1.x + point2.x, point1.y + point2.y);
 }
-#endif
+
+#pragma  mark - Enums
 
 typedef NS_ENUM(NSInteger, LXScrollingDirection) {
     LXScrollingDirectionUnknown = 0,
@@ -26,22 +26,31 @@ typedef NS_ENUM(NSInteger, LXScrollingDirection) {
     LXScrollingDirectionRight
 };
 
+#pragma mark Constants
+
 static NSString * const kLXScrollingDirectionKey = @"LXScrollingDirection";
 static NSString * const kLXCollectionViewKeyPath = @"collectionView";
+static NSInteger kLXFramesPerSecond = 60.f;
+
+#pragma mark -  CADisplayLink (LX_userInfo)
 
 @interface CADisplayLink (LX_userInfo)
 @property (nonatomic, copy) NSDictionary *LX_userInfo;
 @end
 
+
 @implementation CADisplayLink (LX_userInfo)
-- (void) setLX_userInfo:(NSDictionary *) LX_userInfo {
+
+- (void)setLX_userInfo:(NSDictionary *) LX_userInfo {
     objc_setAssociatedObject(self, "LX_userInfo", LX_userInfo, OBJC_ASSOCIATION_COPY);
 }
 
-- (NSDictionary *) LX_userInfo {
+- (NSDictionary *)LX_userInfo {
     return objc_getAssociatedObject(self, "LX_userInfo");
 }
 @end
+
+#pragma mark - UICollectionViewCell UICollectionViewCell (LXReorderableCollectionViewFlowLayout)
 
 @interface UICollectionViewCell (LXReorderableCollectionViewFlowLayout)
 
@@ -60,6 +69,8 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 }
 
 @end
+
+#pragma mark - LXReorderableCollectionViewFlowLayout
 
 @interface LXReorderableCollectionViewFlowLayout ()
 
@@ -122,21 +133,6 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
         [self addObserver:self forKeyPath:kLXCollectionViewKeyPath options:NSKeyValueObservingOptionNew context:nil];
     }
     return self;
-}
-
-- (void)dealloc
-{
-    [self invalidatesScrollTimer];
-    [self removeObserver:self forKeyPath:kLXCollectionViewKeyPath];
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationWillResignActiveNotification object:nil];
-}
-
-- (void)applyLayoutAttributes:(UICollectionViewLayoutAttributes *)layoutAttributes
-{
-    if ([layoutAttributes.indexPath isEqual:self.indexPathForSelectedItem])
-	{
-        layoutAttributes.hidden = YES;
-    }
 }
 
 - (id<LXReorderableCollectionViewDataSource>)dataSource
@@ -382,7 +378,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
     CGSize frameSize = self.collectionView.bounds.size;
     CGSize contentSize = self.collectionView.contentSize;
     CGPoint contentOffset = self.collectionView.contentOffset;
-    CGFloat distance = rint(self.scrollingSpeed / LX_FRAMES_PER_SECOND);
+    CGFloat distance = rint(self.scrollingSpeed / kLXFramesPerSecond);
     CGPoint translation = CGPointZero;
 	
 	switch(direction)
@@ -448,7 +444,8 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 - (NSArray *)layoutAttributesForElementsInRect:(CGRect)rect {
     NSArray *layoutAttributesForElementsInRect = [super layoutAttributesForElementsInRect:rect];
     
-    for (UICollectionViewLayoutAttributes *layoutAttributes in layoutAttributesForElementsInRect) {
+    for (UICollectionViewLayoutAttributes *layoutAttributes in layoutAttributesForElementsInRect)
+	{
         switch (layoutAttributes.representedElementCategory) {
             case UICollectionElementCategoryCell: {
                 [self applyLayoutAttributes:layoutAttributes];
@@ -462,19 +459,26 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
     return layoutAttributesForElementsInRect;
 }
 
-- (UICollectionViewLayoutAttributes *)layoutAttributesForItemAtIndexPath:(NSIndexPath *)indexPath {
+- (UICollectionViewLayoutAttributes *)layoutAttributesForItemAtIndexPath:(NSIndexPath *)indexPath
+{
     UICollectionViewLayoutAttributes *layoutAttributes = [super layoutAttributesForItemAtIndexPath:indexPath];
-    
     switch (layoutAttributes.representedElementCategory) {
         case UICollectionElementCategoryCell: {
             [self applyLayoutAttributes:layoutAttributes];
         } break;
         default: {
-            // Do nothing...
         } break;
     }
     
     return layoutAttributes;
+}
+
+- (void)applyLayoutAttributes:(UICollectionViewLayoutAttributes *)layoutAttributes
+{
+    if ([layoutAttributes.indexPath isEqual:self.indexPathForSelectedItem])
+	{
+        layoutAttributes.hidden = YES;
+    }
 }
 
 #pragma mark - UIGestureRecognizerDelegate methods
@@ -497,7 +501,7 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 	{
         return _longPressGestureRecognizer == otherGestureRecognizer;
     }
-	
+
     return NO;
 }
 
@@ -520,6 +524,15 @@ static NSString * const kLXCollectionViewKeyPath = @"collectionView";
 - (void)handleApplicationWillResignActive:(NSNotification *)notification {
     self.panGestureRecognizer.enabled = NO;
     self.panGestureRecognizer.enabled = YES;
+}
+
+#pragma mark Dealloc
+
+- (void)dealloc
+{
+    [self invalidatesScrollTimer];
+    [self removeObserver:self forKeyPath:kLXCollectionViewKeyPath];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationWillResignActiveNotification object:nil];
 }
 
 @end
