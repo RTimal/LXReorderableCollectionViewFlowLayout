@@ -9,7 +9,7 @@ Pod::Spec.new do |s|
   }
   s.author = 'Rajiev Timal'
   s.source = {
-    :git => 'https://github.com/RTimal/RTReorderableCollectionViewFlowLayout',
+    :git => 'https://github.com/RTimal/RTReorderableCollectionViewFlowLayout.git',
     :tag => '0.1.1'
   }
   s.platform = :ios, '4.3'
