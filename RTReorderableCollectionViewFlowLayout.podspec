@@ -12,9 +12,9 @@ Pod::Spec.new do |s|
     :git => 'https://github.com/RTimal/RTReorderableCollectionViewFlowLayout.git',
     :tag => '0.1.1'
   }
-  s.platform = :ios, '4.3'
-  s.source_files = 'LXReorderableCollectionViewFlowLayout/'
-  s.public_header_files = 'LXReorderableCollectionViewFlowLayout/'
+  s.platform = :ios, '7.0'
+  s.source_files = 'RTReorderableCollectionViewFlowLayout/'
+  s.public_header_files = 'RTReorderableCollectionViewFlowLayout/'
   s.frameworks = 'UIKit', 'CoreGraphics'
   s.requires_arc = true
 end

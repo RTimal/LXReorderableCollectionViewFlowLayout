@@ -1,65 +1,59 @@
-//
-//  LXReorderableCollectionViewFlowLayout.m
-//
-//  Created by Stan Chang Khin Boon on 1/10/12.
-//  Copyright (c) 2012 d--buzz. All rights reserved.
-//
 
-#import "LXReorderableCollectionViewFlowLayout.h"
+#import "RTReorderableCollectionViewFlowLayout.h"
 #import <QuartzCore/QuartzCore.h>
 #import <objc/runtime.h>
 
 #pragma mark Inline Function
 
 CG_INLINE CGPoint
-LXS_CGPointAdd(CGPoint point1, CGPoint point2) {
+RTS_CGPointAdd(CGPoint point1, CGPoint point2) {
     return CGPointMake(point1.x + point2.x, point1.y + point2.y);
 }
 
 #pragma  mark - Enums
 
-typedef NS_ENUM(NSInteger, LXScrollingDirection) {
-    LXScrollingDirectionUnknown = 0,
-    LXScrollingDirectionUp,
-    LXScrollingDirectionDown,
-    LXScrollingDirectionLeft,
-    LXScrollingDirectionRight
+typedef NS_ENUM(NSInteger, RTScrollingDirection) {
+    RTScrollingDirectionUnknown = 0,
+    RTScrollingDirectionUp,
+    RTScrollingDirectionDown,
+    RTScrollingDirectionLeft,
+    RTScrollingDirectionRight
 };
 
 #pragma mark Constants
 
-static NSString * const kLXScrollingDirectionKey = @"LXScrollingDirection";
-static NSString * const kLXCollectionViewKeyPath = @"collectionView";
-static NSInteger kLXFramesPerSecond = 60.f;
+static NSString * const kRTScrollingDirectionKey = @"RTScrollingDirection";
+static NSString * const kRTCollectionViewKeyPath = @"collectionView";
+static NSInteger kRTFramesPerSecond = 60.f;
 
-#pragma mark -  CADisplayLink (LX_userInfo)
+#pragma mark -  CADisplayLink (RT_userInfo)
 
-@interface CADisplayLink (LX_userInfo)
-@property (nonatomic, copy) NSDictionary *LX_userInfo;
+@interface CADisplayLink (RT_userInfo)
+@property (nonatomic, copy) NSDictionary *RT_userInfo;
 @end
 
-@implementation CADisplayLink (LX_userInfo)
+@implementation CADisplayLink (RT_userInfo)
 
-- (void)setLX_userInfo:(NSDictionary *) LX_userInfo {
-    objc_setAssociatedObject(self, "LX_userInfo", LX_userInfo, OBJC_ASSOCIATION_COPY);
+- (void)setRT_userInfo:(NSDictionary *) RT_userInfo {
+    objc_setAssociatedObject(self, "RT_userInfo", RT_userInfo, OBJC_ASSOCIATION_COPY);
 }
 
-- (NSDictionary *)LX_userInfo {
-    return objc_getAssociatedObject(self, "LX_userInfo");
+- (NSDictionary *)RT_userInfo {
+    return objc_getAssociatedObject(self, "RT_userInfo");
 }
 @end
 
-#pragma mark - UICollectionViewCell UICollectionViewCell (LXReorderableCollectionViewFlowLayout)
+#pragma mark - UICollectionViewCell UICollectionViewCell (RTReorderableCollectionViewFlowLayout)
 
-@interface UICollectionViewCell (LXReorderableCollectionViewFlowLayout)
+@interface UICollectionViewCell (RTReorderableCollectionViewFlowLayout)
 
-- (UIImage *)LX_rasterizedImage;
+- (UIImage *)RT_rasterizedImage;
 
 @end
 
-@implementation UICollectionViewCell (LXReorderableCollectionViewFlowLayout)
+@implementation UICollectionViewCell (RTReorderableCollectionViewFlowLayout)
 
-- (UIImage *)LX_rasterizedImage
+- (UIImage *)RT_rasterizedImage
 {
     UIGraphicsBeginImageContextWithOptions(self.bounds.size, self.isOpaque, 0.0f);
     [self.layer renderInContext:UIGraphicsGetCurrentContext()];
@@ -70,9 +64,9 @@ static NSInteger kLXFramesPerSecond = 60.f;
 
 @end
 
-#pragma mark - LXReorderableCollectionViewFlowLayout
+#pragma mark - RTReorderableCollectionViewFlowLayout
 
-@interface LXReorderableCollectionViewFlowLayout ()
+@interface RTReorderableCollectionViewFlowLayout ()
 
 @property (strong, nonatomic) NSIndexPath *indexPathForSelectedItem;
 @property (strong, nonatomic) UIView *currentCellCopy;
@@ -80,12 +74,12 @@ static NSInteger kLXFramesPerSecond = 60.f;
 @property (assign, nonatomic) CGPoint panTranslationInCollectionView;
 @property (strong, nonatomic) CADisplayLink *displayLink;
 
-@property (assign, nonatomic, readonly) id<LXReorderableCollectionViewDataSource> dataSource;
-@property (assign, nonatomic, readonly) id<LXReorderableCollectionViewDelegateFlowLayout> delegate;
+@property (assign, nonatomic, readonly) id<RTReorderableCollectionViewDataSource> dataSource;
+@property (assign, nonatomic, readonly) id<RTReorderableCollectionViewDelegateFlowLayout> delegate;
 
 @end
 
-@implementation LXReorderableCollectionViewFlowLayout
+@implementation RTReorderableCollectionViewFlowLayout
 
 #pragma mark Designated Initializer
 
@@ -113,12 +107,12 @@ static NSInteger kLXFramesPerSecond = 60.f;
 {
 	_scrollingSpeed = 300.0f;
     _scrollingTriggerEdgeInsets = UIEdgeInsetsMake(50.0f, 50.0f, 50.0f, 50.0f);
-	[self addObserver:self forKeyPath:kLXCollectionViewKeyPath options:NSKeyValueObservingOptionNew context:nil];
+	[self addObserver:self forKeyPath:kRTCollectionViewKeyPath options:NSKeyValueObservingOptionNew context:nil];
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
 {
-	if ([keyPath isEqualToString:kLXCollectionViewKeyPath])
+	if ([keyPath isEqualToString:kRTCollectionViewKeyPath])
 	{
         if (self.collectionView != nil) {
             [self setupCollectionView];
@@ -153,14 +147,14 @@ static NSInteger kLXFramesPerSecond = 60.f;
 
 #pragma mark - Get Data Source and Delegate
 
-- (id<LXReorderableCollectionViewDataSource>)dataSource
+- (id<RTReorderableCollectionViewDataSource>)dataSource
 {
-    return (id<LXReorderableCollectionViewDataSource>)self.collectionView.dataSource;
+    return (id<RTReorderableCollectionViewDataSource>)self.collectionView.dataSource;
 }
 
-- (id<LXReorderableCollectionViewDelegateFlowLayout>)delegate
+- (id<RTReorderableCollectionViewDelegateFlowLayout>)delegate
 {
-    return (id<LXReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
+    return (id<RTReorderableCollectionViewDelegateFlowLayout>)self.collectionView.delegate;
 }
 #pragma mark - Long Press
 
@@ -189,12 +183,12 @@ static NSInteger kLXFramesPerSecond = 60.f;
             self.currentCellCopy = [[UIView alloc] initWithFrame:collectionViewCell.frame];
 			
 			collectionViewCell.highlighted = YES;
-            UIImageView *highlightedImageView = [[UIImageView alloc] initWithImage:[collectionViewCell LX_rasterizedImage]];
+            UIImageView *highlightedImageView = [[UIImageView alloc] initWithImage:[collectionViewCell RT_rasterizedImage]];
             highlightedImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
             highlightedImageView.alpha = 1.0f;
 			
             collectionViewCell.highlighted = NO;
-            UIImageView *imageView = [[UIImageView alloc] initWithImage:[collectionViewCell LX_rasterizedImage]];
+            UIImageView *imageView = [[UIImageView alloc] initWithImage:[collectionViewCell RT_rasterizedImage]];
             imageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
             imageView.alpha = 0.0f;
 			
@@ -282,7 +276,7 @@ static NSInteger kLXFramesPerSecond = 60.f;
         case UIGestureRecognizerStateChanged:
 		{
             _panTranslationInCollectionView = [gestureRecognizer translationInView:self.collectionView];
-            CGPoint viewCenter = _currentCellCopy.center = LXS_CGPointAdd(_currentViewCenter, self.panTranslationInCollectionView);
+            CGPoint viewCenter = _currentCellCopy.center = RTS_CGPointAdd(_currentViewCenter, self.panTranslationInCollectionView);
 
             [self invalidateLayoutIfNecessary];
             
@@ -291,10 +285,10 @@ static NSInteger kLXFramesPerSecond = 60.f;
                 case UICollectionViewScrollDirectionVertical:
 				{
                     if (viewCenter.y < (CGRectGetMinY(self.collectionView.bounds) + self.scrollingTriggerEdgeInsets.top)) {
-                        [self setupScrollTimerInDirection:LXScrollingDirectionUp];
+                        [self setupScrollTimerInDirection:RTScrollingDirectionUp];
                     } else {
                         if (viewCenter.y > (CGRectGetMaxY(self.collectionView.bounds) - self.scrollingTriggerEdgeInsets.bottom)) {
-                            [self setupScrollTimerInDirection:LXScrollingDirectionDown];
+                            [self setupScrollTimerInDirection:RTScrollingDirectionDown];
                         } else {
                             [self invalidatesScrollTimer];
                         }
@@ -302,10 +296,10 @@ static NSInteger kLXFramesPerSecond = 60.f;
                 } break;
                 case UICollectionViewScrollDirectionHorizontal: {
                     if (viewCenter.x < (CGRectGetMinX(self.collectionView.bounds) + self.scrollingTriggerEdgeInsets.left)) {
-                        [self setupScrollTimerInDirection:LXScrollingDirectionLeft];
+                        [self setupScrollTimerInDirection:RTScrollingDirectionLeft];
                     } else {
                         if (viewCenter.x > (CGRectGetMaxX(self.collectionView.bounds) - self.scrollingTriggerEdgeInsets.right)) {
-                            [self setupScrollTimerInDirection:LXScrollingDirectionRight];
+                            [self setupScrollTimerInDirection:RTScrollingDirectionRight];
                         } else {
                             [self invalidatesScrollTimer];
                         }
@@ -363,11 +357,11 @@ static NSInteger kLXFramesPerSecond = 60.f;
 	
 }
 
-- (void)setupScrollTimerInDirection:(LXScrollingDirection)direction
+- (void)setupScrollTimerInDirection:(RTScrollingDirection)direction
 {
     if (!self.displayLink.paused)
 	{
-        LXScrollingDirection oldDirection = [self.displayLink.LX_userInfo[kLXScrollingDirectionKey] integerValue];
+        RTScrollingDirection oldDirection = [self.displayLink.RT_userInfo[kRTScrollingDirectionKey] integerValue];
 		
         if (direction == oldDirection)
 		{
@@ -378,7 +372,7 @@ static NSInteger kLXFramesPerSecond = 60.f;
     [self invalidatesScrollTimer];
 	
     self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(handleScroll:)];
-    self.displayLink.LX_userInfo = @{ kLXScrollingDirectionKey : @(direction) };
+    self.displayLink.RT_userInfo = @{ kRTScrollingDirectionKey : @(direction) };
 	
     [self.displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
 }
@@ -394,19 +388,19 @@ static NSInteger kLXFramesPerSecond = 60.f;
 
 
 - (void)handleScroll:(CADisplayLink *)displayLink {
-    LXScrollingDirection direction = (LXScrollingDirection)[displayLink.LX_userInfo[kLXScrollingDirectionKey] integerValue];
-    if (direction == LXScrollingDirectionUnknown) {
+    RTScrollingDirection direction = (RTScrollingDirection)[displayLink.RT_userInfo[kRTScrollingDirectionKey] integerValue];
+    if (direction == RTScrollingDirectionUnknown) {
         return;
     }
     CGSize frameSize = self.collectionView.bounds.size;
     CGSize contentSize = self.collectionView.contentSize;
     CGPoint contentOffset = self.collectionView.contentOffset;
-    CGFloat distance = rint(self.scrollingSpeed / kLXFramesPerSecond);
+    CGFloat distance = rint(self.scrollingSpeed / kRTFramesPerSecond);
     CGPoint translation = CGPointZero;
 	
 	switch(direction)
 	{
-        case LXScrollingDirectionUp:
+        case RTScrollingDirectionUp:
 		{
             distance = -distance;
             CGFloat minY = 0.0f;
@@ -417,7 +411,7 @@ static NSInteger kLXFramesPerSecond = 60.f;
             }
             translation = CGPointMake(0.0f, distance);
         } break;
-        case LXScrollingDirectionDown:
+        case RTScrollingDirectionDown:
 		{
             CGFloat maxY = MAX(contentSize.height, frameSize.height) - frameSize.height;
             
@@ -428,7 +422,7 @@ static NSInteger kLXFramesPerSecond = 60.f;
             
             translation = CGPointMake(0.0f, distance);
         } break;
-        case LXScrollingDirectionLeft:
+        case RTScrollingDirectionLeft:
 		{
             distance = -distance;
             CGFloat minX = 0.0f;
@@ -440,7 +434,7 @@ static NSInteger kLXFramesPerSecond = 60.f;
             
             translation = CGPointMake(distance, 0.0f);
         } break;
-        case LXScrollingDirectionRight:
+        case RTScrollingDirectionRight:
 		{
             CGFloat maxX = MAX(contentSize.width, frameSize.width) - frameSize.width;
             
@@ -456,9 +450,9 @@ static NSInteger kLXFramesPerSecond = 60.f;
         } break;
     }
     
-    self.currentViewCenter = LXS_CGPointAdd(self.currentViewCenter, translation);
-    self.currentCellCopy.center = LXS_CGPointAdd(self.currentViewCenter, self.panTranslationInCollectionView);
-    self.collectionView.contentOffset = LXS_CGPointAdd(contentOffset, translation);
+    self.currentViewCenter = RTS_CGPointAdd(self.currentViewCenter, translation);
+    self.currentCellCopy.center = RTS_CGPointAdd(self.currentViewCenter, self.panTranslationInCollectionView);
+    self.collectionView.contentOffset = RTS_CGPointAdd(contentOffset, translation);
 }
 
 #pragma mark - UICollectionViewLayout overridden methods
@@ -540,7 +534,7 @@ static NSInteger kLXFramesPerSecond = 60.f;
 - (void)dealloc
 {
     [self invalidatesScrollTimer];
-    [self removeObserver:self forKeyPath:kLXCollectionViewKeyPath];
+    [self removeObserver:self forKeyPath:kRTCollectionViewKeyPath];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationWillResignActiveNotification object:nil];
 }
 

@@ -1,13 +1,7 @@
-//
-//  LXReorderableCollectionViewFlowLayout.h
-//
-//  Created by Stan Chang Khin Boon on 1/10/12.
-//  Copyright (c) 2012 d--buzz. All rights reserved.
-//
 
 #import <UIKit/UIKit.h>
 
-@interface LXReorderableCollectionViewFlowLayout : UICollectionViewFlowLayout <UIGestureRecognizerDelegate>
+@interface RTReorderableCollectionViewFlowLayout : UICollectionViewFlowLayout <UIGestureRecognizerDelegate>
 
 @property (assign, nonatomic) CGFloat scrollingSpeed;
 @property (assign, nonatomic) UIEdgeInsets scrollingTriggerEdgeInsets;
@@ -17,7 +11,7 @@
 
 @end
 
-@protocol LXReorderableCollectionViewDataSource <UICollectionViewDataSource>
+@protocol RTReorderableCollectionViewDataSource <UICollectionViewDataSource>
 
 @optional
 
@@ -31,7 +25,7 @@
 
 @end
 
-@protocol LXReorderableCollectionViewDelegateFlowLayout <UICollectionViewDelegateFlowLayout>
+@protocol RTReorderableCollectionViewDelegateFlowLayout <UICollectionViewDelegateFlowLayout>
 @optional
 
 - (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout willBeginDraggingItemAtIndexPath:(NSIndexPath *)indexPath;

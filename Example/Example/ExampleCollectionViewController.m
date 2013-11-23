@@ -6,7 +6,7 @@
 //  Copyright (c) 2012 d--buzz. All rights reserved.
 //
 
-#import "LXCollectionViewController.h"
+#import "ExampleCollectionViewController.h"
 #import "PlayingCard.h"
 #import "PlayingCardCell.h"
 
@@ -16,7 +16,7 @@
 
 #define LX_LIMITED_MOVEMENT 0
 
-@implementation LXCollectionViewController
+@implementation ExampleCollectionViewController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
